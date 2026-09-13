@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سجل تصنيف الكباتن</title>
+<style>
+  :root{
+    --bg: #14181f;
+    --panel: #1c222c;
+    --panel-2: #232a35;
+    --line: #2e3644;
+    --text: #e8ebf0;
+    --muted: #8c96a6;
+    --accent: #d99a3c;
+    --accent-soft: rgba(217,154,60,0.14);
+    --red: #d16158;
+    --red-soft: rgba(209,97,88,0.14);
+    --amber: #d9b23c;
+    --amber-soft: rgba(217,178,60,0.14);
+    --green: #6aa66b;
+    --green-soft: rgba(106,166,107,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 28px 18px 60px;
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; }
+  header{ margin-bottom: 22px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+  h1{ font-size: 1.45rem; font-weight: 700; margin: 0 0 4px; letter-spacing: 0.2px; }
+  .sub{ color: var(--muted); font-size: 0.92rem; display:flex; align-items:center; gap:6px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--green); display:inline-block; }
+  .dot.off{ background: var(--red); }
+
+  .backup{ display:flex; gap:8px; }
+  .icon-btn{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .icon-btn:hover{ color: var(--text); border-color: var(--accent); }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 10px; }
+  .row > *{ flex:1; min-width: 140px; }
+  label{ display:block; font-size:0.82rem; color: var(--muted); margin-bottom: 5px; }
+  input[type=text], textarea, select{
+    width:100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 9px 11px;
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+  textarea{ resize: vertical; min-height: 54px; }
+  input:focus, textarea:focus, select:focus{ outline: none; border-color: var(--accent); }
+
+  .status-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 12px; align-items:center; }
+  .status-chip{
+    padding: 7px 13px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .status-chip.active{ border-color: transparent; color: #17140f; font-weight: 600; }
+  .status-chip[data-tone="green"].active{ background: #8fc990; color:#123212; }
+  .status-chip[data-tone="amber"].active{ background: #e6c565; color:#332a08; }
+  .status-chip[data-tone="red"].active{ background: #e18179; color:#3a0d09; }
+  .status-chip[data-tone="neutral"].active{ background: #aeb7c4; color:#1a1e25; }
+  .status-chip.add{ border-style: dashed; color: var(--accent); }
+
+  .new-status-box{
+    display:none; gap:8px; align-items:center; margin: -4px 0 12px; flex-wrap: wrap;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+  }
+  .new-status-box.open{ display:flex; }
+  .new-status-box input{ flex:1; min-width: 120px; }
+  .tone-dot{ width:20px; height:20px; border-radius:50%; cursor:pointer; border: 2px solid transparent; }
+  .tone-dot[data-tone="green"]{ background:#8fc990; }
+  .tone-dot[data-tone="amber"]{ background:#e6c565; }
+  .tone-dot[data-tone="red"]{ background:#e18179; }
+  .tone-dot[data-tone="neutral"]{ background:#aeb7c4; }
+  .tone-dot.selected{ border-color: #fff; }
+
+  button.primary{
+    background: var(--accent); color: #211705; border: none; padding: 10px 20px;
+    border-radius: 7px; font-weight: 600; font-size: 0.95rem; cursor: pointer;
+  }
+  button.primary:hover{ filter: brightness(1.08); }
+  button.primary:disabled{ opacity:0.5; cursor:default; }
+  button.ghost{
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    padding: 9px 16px; border-radius: 7px; font-size: 0.88rem; cursor: pointer;
+  }
+  button.ghost:hover{ color: var(--text); }
+
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 14px; }
+  .search{ flex: 2; min-width: 180px; }
+  .filter-chip{
+    padding: 9px 14px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel-2);
+    color: var(--muted); font-size: 0.85rem; cursor: pointer; white-space: nowrap;
+  }
+  .filter-chip.active{ background: var(--amber-soft); border-color: var(--amber); color: var(--amber); font-weight:600; }
+
+  .count{ color: var(--muted); font-size: 0.85rem; margin-bottom: 10px; }
+
+  .list{ display:flex; flex-direction:column; gap:10px; }
+  .card{ background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card.stagnant{ border-color: var(--red); }
+  .card-top{ display:flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .name{ font-weight: 700; font-size: 1.02rem; }
+  .phone{ color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+  .badges{ display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
+  .badge{ font-size: 0.78rem; padding: 4px 11px; border-radius: 20px; white-space: nowrap; font-weight: 600; }
+  .badge[data-tone="green"]{ background: var(--green-soft); color: var(--green); }
+  .badge[data-tone="amber"]{ background: var(--amber-soft); color: var(--amber); }
+  .badge[data-tone="red"]{ background: var(--red-soft); color: var(--red); }
+  .badge[data-tone="neutral"]{ background: rgba(255,255,255,0.07); color: var(--muted); }
+  .badge.stagnant-badge{ background: var(--red-soft); color: var(--red); }
+
+  .notes{ margin-top: 9px; font-size: 0.9rem; color: #c3c9d2; line-height:1.55; white-space: pre-wrap; }
+  .meta{ margin-top: 10px; display:flex; justify-content: space-between; align-items:center; }
+  .date{ font-size: 0.76rem; color: var(--muted); }
+  .actions{ display:flex; gap: 14px; }
+  .actions button{ background:none; border:none; color: var(--muted); font-size: 0.8rem; cursor:pointer; padding:0; }
+  .actions button:hover{ color: var(--text); }
+  .actions button.danger:hover{ color: var(--red); }
+  .actions button.resolve{ color: var(--green); font-weight: 600; }
+  .actions button.resolve:hover{ color: #8fc990; }
+
+  .empty{ text-align:center; color: var(--muted); padding: 40px 10px; font-size: 0.92rem; }
+  #importInput{ display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>سجل تصنيف الكباتن</h1>
+      <div class="sub"><span class="dot" id="statusDot"></span><span id="statusText">جاري الاتصال...</span></div>
+    </div>
+    <div class="backup">
+      <button class="icon-btn" id="exportBtn">تنزيل نسخة احتياطية</button>
+      <button class="icon-btn" id="importBtn">استيراد نسخة</button>
+      <input type="file" id="importInput" accept="application/json">
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label>اسم الكابتن</label>
+        <input type="text" id="name" placeholder="مثال: محمد أحمد">
+      </div>
+      <div>
+        <label>رقم الجوال (اختياري)</label>
+        <input type="text" id="phone" placeholder="05xxxxxxxx">
+      </div>
+    </div>
+
+    <label>التصنيف</label>
+    <div class="status-row" id="statusRow"></div>
+
+    <div class="new-status-box" id="newStatusBox">
+      <input type="text" id="newStatusLabel" placeholder="اسم التصنيف الجديد">
+      <div class="tone-dot" data-tone="green"></div>
+      <div class="tone-dot" data-tone="amber"></div>
+      <div class="tone-dot" data-tone="red"></div>
+      <div class="tone-dot" data-tone="neutral"></div>
+      <button class="ghost" id="addStatusConfirm">إضافة</button>
+    </div>
+
+    <label>ملاحظات</label>
+    <textarea id="notes" placeholder="اكتب أي تفاصيل إضافية..."></textarea>
+
+    <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+      <button class="primary" id="saveBtn">حفظ</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" class="search" id="search" placeholder="بحث بالاسم أو رقم الجوال...">
+    <div class="filter-chip" id="stagnantFilter">المشاكل الراكدة (٧+ أيام)</div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div class="list" id="list"></div>
+</div>
+
+<script>
+// ---- إعدادات الاتصال بقاعدة بيانات Supabase ----
+const SUPABASE_URL = 'https://mjelywusygupbhguppxl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bdEAOsPd9-s5t3tq11xweQ_BQ9ZieBD';
+const REST = `${SUPABASE_URL}/rest/v1`;
+const HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
+
+const STAGNANT_DAYS = 7;
+
+let statuses = [];
+let entries = [];
+let selectedStatus = null;
+let editingId = null;
+let stagnantOnly = false;
+let newStatusTone = 'amber';
+
+const listEl = document.getElementById('list');
+const countEl = document.getElementById('count');
+const statusRow = document.getElementById('statusRow');
+const searchEl = document.getElementById('search');
+const newStatusBox = document.getElementById('newStatusBox');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const saveBtn = document.getElementById('saveBtn');
+
+function setConnection(ok, msg){
+  statusDot.classList.toggle('off', !ok);
+  statusText.textContent = msg;
+}
+
+async function api(path, options = {}){
+  const res = await fetch(`${REST}/${path}`, {
+    ...options,
+    headers: { ...HEADERS, ...(options.headers || {}) },
+  });
+  if(!res.ok){
+    const errText = await res.text().catch(() => '');
+    throw new Error(`${res.status} ${errText}`);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function renderStatusChips(){
+  statusRow.innerHTML = '';
+  statuses.forEach(s => {
+    const chip = document.createElement('div');
+    chip.className = 'status-chip' + (s.id === selectedStatus ? ' active' : '');
+    chip.dataset.tone = s.tone;
+    chip.textContent = s.label;
+    chip.onclick = () => { selectedStatus = s.id; newStatusBox.classList.remove('open'); renderStatusChips(); };
+    statusRow.appendChild(chip);
+  });
+  const addChip = document.createElement('div');
+  addChip.className = 'status-chip add';
+  addChip.textContent = '+ تصنيف جديد';
+  addChip.onclick = () => newStatusBox.classList.toggle('open');
+  statusRow.appendChild(addChip);
+}
+
+document.querySelectorAll('.tone-dot').forEach(dot => {
+  dot.onclick = () => {
+    document.querySelectorAll('.tone-dot').forEach(d => d.classList.remove('selected'));
+    dot.classList.add('selected');
+    newStatusTone = dot.dataset.tone;
+  };
+});
+document.querySelector('.tone-dot[data-tone="amber"]').classList.add('selected');
+
+document.getElementById('addStatusConfirm').onclick = async () => {
+  const labelInput = document.getElementById('newStatusLabel');
+  const label = labelInput.value.trim();
+  if(!label) { labelInput.focus(); return; }
+  const id = 'c_' + Date.now().toString(36);
+  const sort_order = statuses.length + 1;
+  try{
+    await api('statuses', { method: 'POST', body: JSON.stringify({ id, label, tone: newStatusTone, sort_order }) });
+    statuses.push({ id, label, tone: newStatusTone, sort_order });
+    selectedStatus = id;
+    labelInput.value = '';
+    newStatusBox.classList.remove('open');
+    renderStatusChips();
+  }catch(e){
+    alert('تعذر إضافة التصنيف، حاول مرة أخرى');
+  }
+};
+
+function statusInfo(id){
+  return statuses.find(s => s.id === id) || statuses[0] || { id:'ok', label:'عادي', tone:'green' };
+}
+
+async function loadAll(){
+  try{
+    statuses = await api('statuses?select=*&order=sort_order.asc');
+    entries = await api('captains?select=*&order=updated_at.desc');
+    selectedStatus = statuses[0] ? statuses[0].id : null;
+    setConnection(true, 'متصل — البيانات تتزامن أونلاين');
+    saveBtn.disabled = false;
+    renderStatusChips();
+    render();
+  }catch(e){
+    setConnection(false, 'تعذر الاتصال بقاعدة البيانات');
+    saveBtn.disabled = true;
+  }
+}
+
+function resetForm(){
+  document.getElementById('name').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('notes').value = '';
+  selectedStatus = statuses[0] ? statuses[0].id : null;
+  editingId = null;
+  saveBtn.textContent = 'حفظ';
+  renderStatusChips();
+}
+
+saveBtn.onclick = async () => {
+  const name = document.getElementById('name').value.trim();
+  if(!name){ document.getElementById('name').focus(); return; }
+  const phone = document.getElementById('phone').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+  const payload = { name, phone, notes, status_id: selectedStatus, updated_at: new Date().toISOString() };
+
+  saveBtn.disabled = true;
+  try{
+    if(editingId){
+      const updated = await api(`captains?id=eq.${editingId}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(payload),
+      });
+      entries = entries.map(e => e.id === editingId ? updated[0] : e);
+    } else {
+      const created = await api('captains', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(payload),
+      });
+      entries = [created[0], ...entries];
+    }
+    resetForm();
+    render();
+  }catch(e){
+    alert('تعذر الحفظ، تحقق من الاتصال وحاول مرة أخرى');
+  }finally{
+    saveBtn.disabled = false;
+  }
+};
+
+function isStagnant(e){
+  const baseline = statuses[0] ? statuses[0].id : null;
+  if(e.status_id === baseline) return false;
+  const days = (Date.now() - new Date(e.updated_at).getTime()) / 86400000;
+  return days >= STAGNANT_DAYS;
+}
+
+document.getElementById('stagnantFilter').onclick = () => {
+  stagnantOnly = !stagnantOnly;
+  document.getElementById('stagnantFilter').classList.toggle('active', stagnantOnly);
+  render();
+};
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  let items = entries.filter(e => !q || e.name.toLowerCase().includes(q) || (e.phone||'').includes(q));
+
+  if(stagnantOnly){
+    items = items.filter(isStagnant);
+    items = [...items].sort((a,b) => new Date(a.updated_at) - new Date(b.updated_at));
+  } else {
+    items = [...items].sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
+  }
+
+  countEl.textContent = items.length ? `${items.length} كابتن` : '';
+
+  if(items.length === 0){
+    listEl.innerHTML = `<div class="empty">${stagnantOnly ? 'لا توجد مشاكل راكدة حالياً' : 'لا يوجد كباتن مسجلين بعد'}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  items.forEach(e => {
+    const info = statusInfo(e.status_id);
+    const stagnant = isStagnant(e);
+    const card = document.createElement('div');
+    card.className = 'card' + (stagnant ? ' stagnant' : '');
+    const dateStr = new Date(e.updated_at).toLocaleDateString('ar-EG', { year:'numeric', month:'short', day:'numeric' });
+    const baseline = statuses[0] ? statuses[0].id : null;
+    card.innerHTML = `
+      <div class="card-top">
+        <div>
+          <div class="name">${escapeHtml(e.name)}</div>
+          ${e.phone ? `<div class="phone">${escapeHtml(e.phone)}</div>` : ''}
+        </div>
+        <div class="badges">
+          <div class="badge" data-tone="${info.tone}">${escapeHtml(info.label)}</div>
+          ${stagnant ? '<div class="badge stagnant-badge">راكدة</div>' : ''}
+        </div>
+      </div>
+      ${e.notes ? `<div class="notes">${escapeHtml(e.notes)}</div>` : ''}
+      <div class="meta">
+        <div class="date">${dateStr}</div>
+        <div class="actions">
+          ${e.status_id !== baseline ? `<button data-action="resolve" data-id="${e.id}" class="resolve">تمت المعالجة</button>` : ''}
+          <button data-action="edit" data-id="${e.id}">تعديل</button>
+          <button data-action="delete" data-id="${e.id}" class="danger">حذف</button>
+        </div>
+      </div>
+    `;
+    listEl.appendChild(card);
+  });
+
+  listEl.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+    btn.onclick = () => startEdit(btn.dataset.id);
+  });
+  listEl.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+    btn.onclick = () => deleteEntry(btn.dataset.id);
+  });
+  listEl.querySelectorAll('button[data-action="resolve"]').forEach(btn => {
+    btn.onclick = () => resolveEntry(btn.dataset.id);
+  });
+}
+
+function startEdit(id){
+  const e = entries.find(x => x.id === id);
+  if(!e) return;
+  document.getElementById('name').value = e.name;
+  document.getElementById('phone').value = e.phone || '';
+  document.getElementById('notes').value = e.notes || '';
+  selectedStatus = e.status_id;
+  editingId = id;
+  saveBtn.textContent = 'تحديث';
+  renderStatusChips();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteEntry(id){
+  try{
+    await api(`captains?id=eq.${id}`, { method: 'DELETE' });
+    entries = entries.filter(e => e.id !== id);
+    render();
+  }catch(e){
+    alert('تعذر الحذف، حاول مرة أخرى');
+  }
+}
+
+async function resolveEntry(id){
+  const e = entries.find(x => x.id === id);
+  if(!e) return;
+  const baseline = statuses[0] ? statuses[0].id : null;
+  const todayStr = new Date().toLocaleDateString('ar-EG', { year:'numeric', month:'short', day:'numeric' });
+  const prevStatusLabel = statusInfo(e.status_id).label;
+  const resolutionLine = `✔ تمت المعالجة بتاريخ ${todayStr} (كانت: ${prevStatusLabel})`;
+  const newNotes = e.notes ? `${e.notes}\n${resolutionLine}` : resolutionLine;
+  try{
+    const updated = await api(`captains?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ status_id: baseline, notes: newNotes, updated_at: new Date().toISOString() }),
+    });
+    entries = entries.map(x => x.id === id ? updated[0] : x);
+    render();
+  }catch(e){
+    alert('تعذر التحديث، حاول مرة أخرى');
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+searchEl.oninput = render;
+
+// نسخ احتياطي محلي إضافي (اختياري) فوق التزامن السحابي
+document.getElementById('exportBtn').onclick = () => {
+  const backup = { entries, statuses, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `captains-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('importBtn').onclick = () => {
+  document.getElementById('importInput').click();
+};
+
+document.getElementById('importInput').onchange = async (ev) => {
+  const file = ev.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(Array.isArray(data.statuses)){
+      const existingIds = new Set(statuses.map(s => s.id));
+      for(const s of data.statuses){
+        if(!existingIds.has(s.id)){
+          await api('statuses', { method: 'POST', body: JSON.stringify(s) });
+        }
+      }
+    }
+    if(Array.isArray(data.entries)){
+      for(const e of data.entries){
+        const { id, ...rest } = e;
+        await api('captains', { method: 'POST', body: JSON.stringify(rest) });
+      }
+    }
+    await loadAll();
+    alert('تم استيراد النسخة الاحتياطية بنجاح');
+  }catch(e){
+    alert('تعذر قراءة الملف، تأكد أنه ملف نسخة احتياطية صالح');
+  }
+  ev.target.value = '';
+};
+
+loadAll();
+</script>
+</body>
+</html>
